@@ -1,5 +1,5 @@
-## Building a data.frame with all candidates ##
-      # Pilling up separated data.frames #
+## Building a data.frame with all candidates -- Pilling up separated data.frames ##
+              # Eliana Lins Morandi, CepespData/FGV, sept.2019 #
 
 all_cand<-readRDS('cand_national.rds') # open candidates in all national elections.
 cand_counc<-readRDS('cand_counc.rds') # open all canditates do city council (councilors).

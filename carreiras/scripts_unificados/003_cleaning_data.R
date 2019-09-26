@@ -1,4 +1,5 @@
-### Treating all non-identified candidates ##
+  ### Treating all non-identified candidates ###
+# Eliana Lins Morandi, CepespData/FGV, sept.2019 #
 
 all_cand<-readRDS('all_cand.rds') # opening data.frame with all candidates.
 df<-filter(all_cand, NUM_TITULO_ELEITORAL_CANDIDATO != "000000000000") # dropping non-nominal votes.

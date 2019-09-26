@@ -1,4 +1,6 @@
-#### CANDIDATES WITHOUT VOTER ID ####
+#### TREATING CANDIDATES WITHOUT VOTER ID ####
+# Eliana Lins Morandi, CepespData/FGV, sept.2019 #
+
 df<-readRDS('df.rds') # importing data.
 nrow(df) # 3419625
 
@@ -39,6 +41,14 @@ only_elected<-df %>%
 # Percentage of duplicated IDs among elected:
 sum(only_elected$flagCPF==T)/nrow(only_elected) # 0.295852% of national IDs
 sum(only_elected$flagTIT==T)/nrow(only_elected) # 0.244% of voter IDs
+
+# Percentage of elected among missing IDs:
+sum(only_elected$flagCPF==T)/sum(cpf$flagCPF==T) # national IDs: 12.10%
+sum(only_elected$flagTIT==T)/sum(cpf$flagTIT==T) # voter IDs: 10.38%
+
+# Percentage of elected among no missing IDs:
+sum(only_elected$flagCPF==F)/sum(cpf$flagCPF==F) # national IDs: 13.5%
+sum(only_elected$flagTIT==F)/sum(cpf$flagTIT==F) # voter IDs: 13.4%
 
 
 # We are dropping all these observations with duplicated IDs from our auxiliar data.frame before the joins:
@@ -84,9 +94,9 @@ df<-no_nat_id %>%
 
 summary(as.numeric(df$CPF_CANDIDATO)) # 8193 NAs left. We've rescued ~ 4 thousands.
 
-rm(no_nat_id,cpf) # removing auxiliar data.frames.
+rm(no_nat_id,cpf,only_elected) # removing auxiliar data.frames.
 
-# Candidates without voter ID and national ID ----
+#### Candidates without voter ID and national ID ####
 summary(as.numeric(df$NUM_TITULO_ELEITORAL_CANDIDATO)) # 845 NAs left
 # Let's try to rescue them using another alternative voter ID based on
 # first name, year of birth, state of birth and sex:
@@ -97,16 +107,27 @@ df <- df %>%
 no_voter_ID <- df %>% # filtering only candidates without voter ID. (845 obs.)
   filter(is.na(NUM_TITULO_ELEITORAL_CANDIDATO)==T)
 
-with_voter_ID <- df %>% # filtering only candidates with voter ID. (1506952 obs.)
-  filter(is.na(NUM_TITULO_ELEITORAL_CANDIDATO)==F) %>%
-  select(id_cand2,NUM_TITULO_ELEITORAL_CANDIDATO) %>%
-  distinct()
+with_voter_ID <- df %>% 
+  filter(is.na(NUM_TITULO_ELEITORAL_CANDIDATO)==F) %>% # filtering only candidates with voter ID. (1506952 obs.)
+  select(id_cand2,NUM_TITULO_ELEITORAL_CANDIDATO) %>% # selecting alternative ID and voter ID variables only.
+  distinct() %>% # removing duplicated observations of the pair <alternativeID-voterID>.
+  # But we still might have cases in which there is one alternative ID corresponding to more than one voter ID and vice-versa.
+  # Let's remove these from our data.frame:
+  mutate(flagTIT = duplicated(NUM_TITULO_ELEITORAL_CANDIDATO)) %>% # creating a variable that identifies... 
+  group_by(NUM_TITULO_ELEITORAL_CANDIDATO) %>% # ...one voter ID for more than one alternative ID. Thus,
+  mutate(flagTIT = sum(flagTIT)) %>% # flagTIT equals zero if voter ID appears only once in the data.frame.
+  ungroup() %>%
+  mutate(flagID = duplicated(id_cand2)) %>% # creating a variable that identifies...
+  group_by(id_cand2) %>% # ...one alternative ID for more than one voter ID. Thus,
+  mutate(flagID = sum(flagID)) %>% # flagID equals zero if alternative ID appears only once in the data.frame.
+  ungroup() %>%
+  filter(flagTIT == 0 & flagID == 0) # keeping only observations with alternative and voter IDs 
+#that appear only once in our data.frame 
 
 no_voter_ID <- no_voter_ID %>% # join using alternative ID.
-  left_join(with_voter_ID, 'id_cand2') # (868 obs.) 
-### CHECAR O QUE ESTÁ DUPLICANDO AQUI EM CIMA
+  left_join(with_voter_ID, 'id_cand2') # (845 obs.: No duplications)
 
-sum(is.na(no_voter_ID$NUM_TITULO_ELEITORAL_CANDIDATO.y)==F) # 138 remaining NA voter IDs.
+sum(is.na(no_voter_ID$NUM_TITULO_ELEITORAL_CANDIDATO.y)==F) # 85 remaining NA voter IDs.
 
 no_voter_ID$NUM_TITULO_ELEITORAL_CANDIDATO <- no_voter_ID$NUM_TITULO_ELEITORAL_CANDIDATO.y # replacing voter ID with 
 #the ones rescued with the alternative ID. 
@@ -118,23 +139,36 @@ df<-no_voter_ID %>%
   select(colnames(df))%>%
   rbind(df)
 
-summary(is.na(df$NUM_TITULO_ELEITORAL_CANDIDATO)) # 363 candidates without voter ID.
+sum(is.na(df$NUM_TITULO_ELEITORAL_CANDIDATO)) # 760 candidates without voter ID.
+
 rm(no_voter_ID,with_voter_ID)
 
 
 ## Recovering National ID with alternative ID:
-no_nat_ID <- df %>% # filtering only candidates without national ID.
+no_nat_ID <- df %>% # filtering only candidates without national ID. (8193 obs.)
   filter(is.na(CPF_CANDIDATO)==T)
 
-with_nat_ID <- df %>% # filtering only candidates with national ID. (1506952 obs.)
-  filter(is.na(CPF_CANDIDATO)==F) %>%
+with_nat_ID <- df %>%
+  filter(is.na(CPF_CANDIDATO)==F) %>% # filtering only candidates with national ID.
   select(id_cand2,CPF_CANDIDATO) %>%
-  distinct()
+  distinct() %>% # removing duplicated observations of the pair <alternativeID-nationalID>.
+  # But we still might have cases in which there is one alternative ID corresponding to more than one national ID and vice-versa.
+  # Let's remove these from our data.frame:
+  mutate(flagCPF = duplicated(CPF_CANDIDATO)) %>% # creating a variable that identifies... 
+  group_by(CPF_CANDIDATO) %>% # ...one national ID for more than one alternative ID. Thus,
+  mutate(flagCPF = sum(flagCPF)) %>% # flagCPF equals zero if national ID appears only once in the data.frame.
+  ungroup() %>%
+  mutate(flagID = duplicated(id_cand2)) %>% # creating a variable that identifies...
+  group_by(id_cand2) %>% # ...one alternative ID for more than one national ID. Thus,
+  mutate(flagID = sum(flagID)) %>% # flagID equals zero if alternative ID appears only once in the data.frame.
+  ungroup() %>%
+  filter(flagCPF == 0 & flagID == 0) # keeping only observations with alternative and voter IDs 
+#that appear only once in our data.frame 
 
-no_nat_ID <- no_nat_ID %>% # join using alternative ID.
+no_nat_ID <- no_nat_ID %>% # join using alternative ID. (8193 obs. No observations duplicated by the join)
   left_join(with_nat_ID, 'id_cand2')
 
-sum(is.na(no_nat_ID$CPF_CANDIDATO.y)==F) # we've recovered 1586580 (out of 1589327) national IDs.
+sum(is.na(no_nat_ID$CPF_CANDIDATO.y)==F) # 609 candidates with NA national IDs.
 
 no_nat_ID$CPF_CANDIDATO <- no_nat_ID$CPF_CANDIDATO.y # replacing nationa ID with 
 #the ones rescued with the alternative ID. 
@@ -146,13 +180,22 @@ df<-no_nat_ID %>%
   select(colnames(df))%>%
   rbind(df)
 
-summary(is.na(df$CPF_CANDIDATO)) # 2747 candidates without national ID.
+summary(is.na(df$CPF_CANDIDATO)) # 7584 candidates without national ID.
+
+df %>% select(id_cand2,ANO_ELEICAO,NUM_TURNO) %>% distinct() %>% nrow() # 2565917 unique <candidate-election-round> in our data.frame
 
 
-df %>% select(id_cand2,ANO_ELEICAO, NUM_TURNO) %>% distinct() %>% nrow() # 1448780 rows. We clearly have
-# duplicated observations in the join.
+#### Who are the non-identified winners ####
+winners_novoterID <- df %>%
+  filter(DESC_SIT_TOT_TURNO=='2º TURNO'|
+           DESC_SIT_TOT_TURNO=='ELEITO POR QP'| 
+           DESC_SIT_TOT_TURNO=='ELEITO'|
+           DESC_SIT_TOT_TURNO== 'ELEITO POR MEDIA') %>% # Filtering Winners...
+  filter(is.na(NUM_TITULO_ELEITORAL_CANDIDATO)==T) # ...without voter ID. (9 winners only)
 
 
 #### Saving Data with identified candidates ####
 saveRDS(df, 'df_identified.rds')
-rm(list=ls())
+saveRDS(winners_novoterID, 'winners_novoterID.rds')
+
+rm(list=ls()) # cleaning workspace.

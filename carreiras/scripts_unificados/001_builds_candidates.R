@@ -1,4 +1,5 @@
 ## This script builds a pannel with all candidates that ever participated in elections since 1998 ##
+                  # Eliana Lins Morandi, CepespData/FGV, sept.2019 #
 
 #### National & State Elections ####
 

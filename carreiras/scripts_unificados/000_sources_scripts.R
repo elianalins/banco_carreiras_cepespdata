@@ -1,5 +1,5 @@
 ## Scripts that build candidates pannel using CepespData ##
-        # Eliana Lins Morandi - Set/2019 #
+    # Eliana Lins Morandi, CepespData/FGV, sept.2019 #
 
 # Install cepespR if required
 if (!require("devtools")) install.packages("devtools")
@@ -7,6 +7,9 @@ devtools::install_github("Cepesp-Fgv/cepesp-r")
 
 # Install dplyr if required
 if (!require("tidyverse")) install.packages("tidyverse")
+
+# Install stringdist if required
+if (!require("stringdist")) install.packages("stringdist")
 
 # Clearing R
 rm(list=ls()); cat("\014")
@@ -28,9 +31,7 @@ source('scripts_unificados/003_cleaning_data.R') # cleans voter ID (Titulo de el
 # Generates df.rds
 
 source('scripts_unificados/004_treats_voter_id.R') # rescues national and voter IDs. 
-# Generates df_identified.rds
+# Generates df_identified.rds (data.frame with rescued national and voter IDs) and
+# generates winners_novoterID.rds (data.frame with elected candidates without voter ID -- 9 observations only)
 
-
-
-
-
+source('scripts_unificados/005_corrects_wrong_id.R')
