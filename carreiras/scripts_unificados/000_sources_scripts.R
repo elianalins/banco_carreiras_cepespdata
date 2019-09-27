@@ -34,4 +34,4 @@ source('scripts_unificados/004_treats_voter_id.R') # rescues national and voter 
 # Generates df_identified.rds (data.frame with rescued national and voter IDs) and
 # generates winners_novoterID.rds (data.frame with elected candidates without voter ID -- 9 observations only)
 
-source('scripts_unificados/005_corrects_wrong_id.R')
+source('scripts_unificados/005_explores_wrong_id.R') # Next steps.

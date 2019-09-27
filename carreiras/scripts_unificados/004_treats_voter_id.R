@@ -10,7 +10,7 @@ nrow(df) # 3419625
 # 12985 without national ID, with voter ID.
 # 924 without voter ID, with national ID.
 
-# candidates without voter ID, with National ID (CPF) ----
+#### 1. candidates without voter ID, with National ID (CPF) ####
 ## we will rescue Voter ID from other elections if possible:
 cpf<-df %>% # creating data.frame with key joining National ID and Voter ID.
   filter(temcpf == 1 & temtitulo == 1) %>%
@@ -80,7 +80,7 @@ df <- no_voter_ID %>%
 
 rm(no_voter_ID) # removing auxiliar data.frames.
 
-# Candidates with voter ID, without national ID ----
+#### 2. Candidates with voter ID, without national ID ####
 no_nat_id <- filter(df, temtitulo == 1, temcpf == 0) # Filtering obs without national ID that have voter ID. (12985 obs.)
 no_nat_id <- left_join(no_nat_id, cpf, 'NUM_TITULO_ELEITORAL_CANDIDATO') # Rescues national ID from other elections. (12985 obs.)
 no_nat_id$CPF_CANDIDATO <- no_nat_id$CPF_CANDIDATO.y # replacing national ID with the one coming from the previous join.
@@ -96,7 +96,7 @@ summary(as.numeric(df$CPF_CANDIDATO)) # 8193 NAs left. We've rescued ~ 4 thousan
 
 rm(no_nat_id,cpf,only_elected) # removing auxiliar data.frames.
 
-#### Candidates without voter ID and national ID ####
+#### 3. Candidates without voter ID and national ID ####
 summary(as.numeric(df$NUM_TITULO_ELEITORAL_CANDIDATO)) # 845 NAs left
 # Let's try to rescue them using another alternative voter ID based on
 # first name, year of birth, state of birth and sex:
